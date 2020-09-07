@@ -1,0 +1,129 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .md
+      format_name: markdown
+      format_version: '1.2'
+      jupytext_version: 1.6.0
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+## Exercice 1
+
+Recherchez les dates présentes dans la phrase suivante
+
+```python
+texte = """Je suis né le 28/12/1903 et je suis mort le 08/02/1957. Ma seconde femme est morte le 10/11/1963. 
+J'ai écrit un livre intitulé 'Comprendre les fractions : les exemples en page 12/46/83' """
+```
+
+```python
+import re
+# première étape : construction
+expression = re.compile("([0-3]?[0-9]/[0-1]?[0-9]/([0-2][0-9])?[0-9][0-9])")
+# seconde étape : recherche
+res = expression.findall(texte)
+print(res)
+```
+
+Puis dans celle-ci : 
+
+```python
+texte = """Je suis né le 28/12/1903 et je suis mort le 08/02/1957. Je me suis marié le 8/5/45. 
+J'ai écrit un livre intitulé 'Comprendre les fractions : les exemples en page 12/46/83' """
+```
+
+```python
+import re
+# première étape : construction
+expression = re.compile("([0-3]?[0-9]/[0-1]?[0-9]/([0-2][0-9])?[0-9][0-9])")
+# seconde étape : recherche
+res = expression.findall(texte)
+print(res)
+```
+
+## Exercice 2
+
+Nettoyer des colonnes d'un DataFrame en utilisant des expressions régulières.
+
+La base en question contient des livres de la British Library et quelques informations les concernant. 
+
+```python
+import pandas
+
+data_books = pandas.read_csv('https://raw.githubusercontent.com/realpython/python-data-cleaning/master/Datasets/BL-Flickr-Images-Book.csv',sep=',')
+```
+
+```python
+data_books=data_books[['Identifier', 'Place of Publication',
+       'Date of Publication', 'Publisher', 'Title', 'Author']]
+```
+
+```python
+data_books[['Date of Publication',"Title"]].head(20)
+```
+
+La colonne "Date de Publication" n'est pas toujours une année, il y a parfois d'autres informations. 
+
+Le but de l'exercice est d'avoir une date de publication du livre propre.
+
+
+1) La première chose à faire est de regarder la base afin de s'assurer que les opérations de regex sont cohérentes avec les informations présentes initialement. 
+
+Pour cela, on commence par regarde le nombre d'informations manquantes (on ne pourra pas avoir mieux après la regex, et normalement on ne devrait pas avoir moins...)
+
+```python
+data_books[['Date of Publication']].isna().sum()
+```
+
+2) on détermine la forme de la regex pour une date de publication. A priori, il y a 4 chiffres qui forment une année.
+
+```python
+regex = r'([0-2][0-9][0-9][0-9])'
+```
+
+3) on applique notre regex à la colonne qui nous intéresse avec la fonction str.extract()
+
+```python
+data_books['Cleaned Date of Publication'] = data_books['Date of Publication'].str.extract(regex,expand=True)
+```
+
+```python
+data_books.head()
+```
+
+```python
+data_books[['Cleaned Date of Publication']].isna().sum()
+```
+
+On a 2 Nan qui n'étaient pas présents au début de l'exercice, pourquoi ?
+
+
+On vérifier que notre opération s'est bien déroulée en regardant les éléments qui ont été changés. 
+
+```python
+data_books['check'] = data_books['Cleaned Date of Publication'] == data_books['Date of Publication']
+```
+
+```python
+data_books[['Date of Publication','Cleaned Date of Publication']][data_books['check'].eq(False)]
+```
+
+```python
+data_books['Cleaned Date of Publication']= pandas.to_numeric(data_books['Cleaned Date of Publication'], downcast='float')
+```
+
+```python
+data_books['Cleaned Date of Publication'].dtype
+```
+
+```python
+import matplotlib as plt
+%matplotlib inline
+
+plt.pyplot.hist(data_books['Cleaned Date of Publication'][data_books['Cleaned Date of Publication']>0],bins=20)
+```
